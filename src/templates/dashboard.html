@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}通讯录管理系统{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- 顶部导航 -->
+    <header class="dashboard-header">
+        <div class="header-content">
+            <h1><i class="fas fa-address-book"></i> 通讯录管理系统</h1>
+            <div class="user-info">
+                <span class="welcome-text">欢迎，<strong>{{ session.username }}</strong></span>
+                <div class="header-stats">
+                    <span class="stat-item">
+                        <i class="fas fa-users"></i>
+                        <span id="contact-count">{{ contacts|length }}</span> 个联系人
+                    </span>
+                </div>
+                <a href="{{ url_for('logout') }}" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-main">
+        <!-- 添加联系人卡片 -->
+        <section class="card add-contact-card">
+            <div class="card-header">
+                <h2><i class="fas fa-user-plus"></i> 添加新联系人</h2>
+            </div>
+            <form id="add-contact-form" class="contact-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="name"><i class="fas fa-user"></i> 姓名</label>
+                        <input type="text" id="name" name="name" placeholder="请输入姓名" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone"><i class="fas fa-phone"></i> 电话</label>
+                        <input type="tel" id="phone" name="phone" placeholder="请输入手机号码" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="address"><i class="fas fa-map-marker-alt"></i> 地址</label>
+                        <input type="text" id="address" name="address" placeholder="请输入地址（可选）">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> 添加联系人
+                </button>
+            </form>
+        </section>
+
+        <!-- 联系人列表 -->
+        <section class="card contacts-card">
+            <div class="card-header">
+                <h2><i class="fas fa-list"></i> 联系人列表</h2>
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" placeholder="搜索姓名或电话..." value="{{ search }}">
+                        <button type="button" id="search-btn" class="btn btn-outline">
+                            <i class="fas fa-search"></i> 搜索
+                        </button>
+                        {% if search %}
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-clear">
+                                <i class="fas fa-times"></i> 清除
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="contacts-container">
+                {% if contacts %}
+                    <div id="contacts-list" class="contacts-grid">
+                        {% for contact in contacts %}
+                            <!-- 联系人卡片 - 包含查看模式和编辑模式 -->
+                            <div class="contact-card" id="contact-{{ contact.id }}" data-contact-id="{{ contact.id }}">
+                                
+                                <!-- 查看模式（默认显示） -->
+                                <div class="contact-view-mode">
+                                    <div class="contact-header">
+                                        <h3 class="contact-name">{{ contact.name }}</h3>
+                                        <div class="contact-actions">
+                                            <button class="btn-edit" data-id="{{ contact.id }}">
+                                                <i class="fas fa-edit"></i> 编辑
+                                            </button>
+                                            <button class="btn-delete" data-id="{{ contact.id }}" 
+                                                    data-name="{{ contact.name }}">
+                                                <i class="fas fa-trash"></i> 删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="contact-info">
+                                        <p class="contact-field">
+                                            <i class="fas fa-phone"></i>
+                                            <span class="contact-phone">{{ contact.phone }}</span>
+                                        </p>
+                                        {% if contact.address %}
+                                        <p class="contact-field">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <span class="contact-address">{{ contact.address }}</span>
+                                        </p>
+                                        {% endif %}
+                                        <p class="contact-date">
+                                            <i class="fas fa-calendar"></i>
+                                            添加于 {{ contact.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- 编辑模式（默认隐藏） -->
+                                <div class="contact-edit-mode" style="display: none;">
+                                    <form class="edit-contact-form">
+                                        <input type="hidden" name="contact_id" value="{{ contact.id }}">
+                                        
+                                        <div class="edit-form">
+                                            <div class="form-group">
+                                                <label><i class="fas fa-user"></i> 姓名</label>
+                                                <input type="text" name="name" value="{{ contact.name }}" class="edit-input" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label><i class="fas fa-phone"></i> 电话</label>
+                                                <input type="tel" name="phone" value="{{ contact.phone }}" class="edit-input" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label><i class="fas fa-map-marker-alt"></i> 地址</label>
+                                                <input type="text" name="address" value="{{ contact.address or '' }}" class="edit-input" placeholder="请输入地址（可选）">
+                                            </div>
+                                            <div class="form-actions">
+                                                <button type="button" class="btn btn-secondary cancel-edit" data-id="{{ contact.id }}">
+                                                    <i class="fas fa-times"></i> 取消
+                                                </button>
+                                                <button type="submit" class="btn btn-primary save-changes" data-id="{{ contact.id }}">
+                                                    <i class="fas fa-save"></i> 保存修改
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-address-book"></i>
+                        {% if search %}
+                            <h3>没有找到匹配的联系人</h3>
+                            <p>尝试使用其他关键词搜索</p>
+                        {% else %}
+                            <h3>暂无联系人</h3>
+                            <p>添加您的第一个联系人开始管理</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</div>
+
+<div id="message-container"></div>
+{% endblock %}
